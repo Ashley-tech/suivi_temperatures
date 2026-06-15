@@ -1,0 +1,5 @@
+{
+  "name": "suivi_temperatures_front",
+  "integrations": {},
+  "type": "vue-vite"
+}
