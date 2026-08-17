@@ -2,8 +2,14 @@ back-end :
 Initialisation :
 python3 -m venv venv
 source venv/bin/activate
+
+ou
+
+py -m venv venv
+venv\Scripts\activate
+
 pip install fastapi uvicorn
-uvicorn app.main:app --reload (Lancement du projet)
+python -m uvicorn app.main:app --reload (Lancement du projet)
 
 front-end :
 ionic start [nom du projet] (Pour créer le projet)
