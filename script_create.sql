@@ -70,7 +70,7 @@ ALTER SEQUENCE public.compte_id_seq OWNED BY public.compte.id;
 
 CREATE TABLE public.temperature (
     id bigint NOT NULL,
-    degre numeric(3,2) NOT NULL,
+    degre numeric(5,2) NOT NULL,
     localisation character varying(20) NOT NULL,
     date_temperature date NOT NULL,
     heure time without time zone,
