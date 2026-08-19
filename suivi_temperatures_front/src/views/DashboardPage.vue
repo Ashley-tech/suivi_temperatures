@@ -32,11 +32,11 @@
           </svg>
         </section>
 
-        <ion-button expand="block" fill="outline">
-          Liste de toutes vos températures
+        <ion-button expand="block" fill="outline" @click="goToTemperatures">
+          Liste de toutes tes températures
         </ion-button>
-        <ion-button expand="block" fill="outline">
-          Modifier vos informations
+        <ion-button expand="block" fill="outline" @click="infosAccount">
+          Informations sur ton compte
         </ion-button>
         <ion-button expand="block" fill="outline" @click="confirmLogout">
           Se déconnecter
@@ -48,13 +48,14 @@
 
 <script setup lang="ts">
 import Cookies from 'js-cookie';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   alertController,
   IonButton,
   IonContent,
   IonHeader,
+  onIonViewWillEnter,
   IonPage,
   IonTitle,
   IonToolbar,
@@ -65,6 +66,20 @@ interface Temperature {
   degre: number | string;
   date_temperature: string;
   heure?: string | null;
+}
+
+interface Compte {
+  id: number;
+  nom_compte: string | null;
+  prenom_compte: string | null;
+  email_compte: string | null;
+  tel: string | null;
+  adresse: string | null;
+  adresse_comp: string | null;
+  cp: string | null;
+  ville: string | null;
+  pays: string | null;
+  fonction: string | null;
 }
 
 interface ChartPoint {
@@ -90,7 +105,7 @@ const showError = async (message: string) => {
 
 const logout = async () => {
   try {
-    await fetch('http://127.0.0.1:8000/login/logout', {
+    await fetch('http://127.0.0.1:8000/logout', {
       method: 'POST',
       credentials: 'include',
     });
@@ -98,17 +113,76 @@ const logout = async () => {
     Cookies.remove('compte_id');
     Cookies.remove('email');
     sessionStorage.removeItem('access_token');
-    await router.push('/');
+    await router.replace('/');
   }
 };
+
+function goToTemperatures() {
+    router.push("/temperatures")
+}
+
+const infosAccount = async () => {
+  const compteId = Cookies.get('compte_id');
+  if (typeof compteId !== 'string' || !compteId) {
+    await showError('Identifiant du compte manquant. Reconnectez-toi.');
+    return;
+  }
+
+  try {
+    const accessToken = sessionStorage.getItem('access_token');
+    const response = await fetch(`http://127.0.0.1:8000/comptes/${compteId}`, {
+      headers: accessToken
+        ? { Authorization: `Bearer ${accessToken}` }
+        : undefined,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      if (response.status === 401) {
+        sessionStorage.removeItem('access_token');
+      }
+      throw new Error(typeof errorData?.detail === 'string' ? errorData.detail : 'Une erreur est survenue.');
+    }
+
+    const compte: Compte = await response.json();
+    const message = [
+      `Nom : ${compte.nom_compte ?? 'Non renseigné'}`,
+      `Prénom : ${compte.prenom_compte ?? 'Non renseigné'}`,
+      `Email : ${compte.email_compte ?? 'Non renseigné'}`,
+      `Téléphone : ${compte.tel ?? 'Non renseigné'}`,
+      `Adresse : ${compte.adresse ?? 'Non renseigné'}`,
+      `Complément d'adresse : ${compte.adresse_comp ?? 'Non renseigné'}`,
+      `Code postal : ${compte.cp ?? 'Non renseigné'}`,
+      `Ville : ${compte.ville ?? 'Non renseigné'}`,
+      `Pays : ${compte.pays ?? 'Non renseigné'}`,
+      `Fonction : ${compte.fonction ?? 'Non renseigné'}`,
+    ].join('\n');
+
+    const alert = await alertController.create({
+      header: 'tes informations',
+      message,
+      buttons: [
+        { text: 'Modifier' },
+        { text: 'Supprimer le compte' },
+        { text: 'Fermer', role: 'cancel' },
+      ],
+    });
+
+    await alert.present();
+    await alert.onDidDismiss();
+  } catch (error) {
+    await showError(error instanceof Error ? error.message : 'Le serveur est inaccessible.');
+  }
+}
 
 const confirmLogout = async () => {
   const alert = await alertController.create({
     header: 'Déconnexion',
-    message: 'Voulez-vous vraiment vous déconnecter ?',
+    message: 'Veux-tu vraiment te déconnecter ?',
     buttons: [
-      { text: 'Non', role: 'cancel' },
       { text: 'Oui', role: 'confirm' },
+      { text: 'Non', role: 'cancel' },
     ],
   });
 
@@ -151,7 +225,8 @@ const loadTemperatures = async () => {
   const compteId = Cookies.get("compte_id");
   if (typeof compteId !== 'string' || !compteId) {
     loading.value = false;
-    await showError('Identifiant du compte manquant. Reconnectez-vous.');
+    await showError('Identifiant du compte manquant. Reconnecte-toi.');
+    await logout();
     return;
   }
 
@@ -180,7 +255,7 @@ const loadTemperatures = async () => {
   }
 };
 
-onMounted(loadTemperatures);
+onIonViewWillEnter(loadTemperatures);
 </script>
 
 <style scoped>
@@ -249,5 +324,9 @@ h2 {
 .chart-value {
   fill: #0f766e;
   font-weight: 700;
+}
+
+:global(.alert-message) {
+  white-space: pre-line;
 }
 </style>

@@ -21,6 +21,7 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8100",
     ],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,6 +53,16 @@ def root():
         "port": settings.POSTGRES_PORT
     }
 
+@app.post("/logout")
+def logout():
+    response = JSONResponse({"message": "Déconnexion réussie"})
+    response.delete_cookie(
+        key="access_token",
+        samesite="lax",
+        secure=False,
+        path="/"
+    )
+    return response
 
 app.include_router(comptes.router)
 app.include_router(temperatures.router)

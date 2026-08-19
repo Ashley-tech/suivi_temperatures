@@ -68,15 +68,3 @@ def login(
     )
 
     return response
-
-
-@router.post("/logout")
-def logout():
-    response = JSONResponse({"message": "Déconnexion réussie"})
-    response.delete_cookie(
-        key="access_token",
-        samesite="lax",
-        secure=False,
-        path="/"
-    )
-    return response

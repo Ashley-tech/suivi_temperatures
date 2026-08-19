@@ -13,15 +13,17 @@
         <form class="login-form" @submit.prevent="onLogin">
           <ion-item lines="full">
             <ion-label position="floating">Email</ion-label>
-            <ion-input v-model="email" type="email" name="email" required></ion-input>
+            <ion-input v-model="email" type="email" name="email" autocomplete="username" required></ion-input>
           </ion-item>
 
           <ion-item lines="full">
             <ion-label position="floating">Mot de passe</ion-label>
             <ion-input
-              v-model="password"
+              :value="password"
               :type="passwordVisible ? 'text' : 'password'"
               name="password"
+              autocomplete="current-password"
+              @ionInput="onPasswordInput"
               required
             ></ion-input>
           </ion-item>
@@ -83,6 +85,10 @@ const togglePasswordVisibility = () => {
   passwordVisible.value = !passwordVisible.value;
 };
 
+const onPasswordInput = (event: CustomEvent) => {
+  password.value = event.detail.value ?? '';
+};
+
 const onLogin = async () => {
   try {
     const response = await fetch('http://127.0.0.1:8000/login', {
@@ -117,7 +123,7 @@ const onLogin = async () => {
       sameSite: 'lax',
     });
     sessionStorage.setItem('access_token', loginData.access_token);
-    await router.push({
+    await router.replace({
       path: '/dashboard',
     });
   } catch {
@@ -130,7 +136,7 @@ const goToForgotPassword = () => {
 };
 
 const goToSignup = () => {
-  // TODO: implement signup flow
+  router.push("/signup")
 };
 </script>
 

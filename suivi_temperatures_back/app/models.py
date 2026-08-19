@@ -40,7 +40,7 @@ class Temperature(Base):
     __tablename__ = "temperature"
 
     id = Column(BigInteger, primary_key=True, index=True)
-    degre = Column(Numeric(3, 2))
+    degre = Column(Numeric(5, 2))
     localisation = Column(String)
     date_temperature = Column(Date, nullable=False)
     heure = Column(Time)

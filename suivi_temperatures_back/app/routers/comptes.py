@@ -61,7 +61,7 @@ class CompteCreate(BaseModel):
     prenom_compte: constr(min_length=1, max_length=100)
     email_compte: EmailStr
     mdp: str = Field(..., min_length=8)
-    tel: str | None = Field(default=None, min_length=8, max_length=20)
+    tel: str | None = Field(default=None, max_length=20)
     adresse: str | None = None
     adresse_comp: str | None = None
     cp: str | None = None
