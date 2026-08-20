@@ -6,9 +6,60 @@
       </ion-toolbar>
     </ion-header>
 
+    <ion-modal :is-open="isAccountFormOpen" @didDismiss="closeAccountForm">
+        <ion-content class="ion-padding">
+            <form class="account-form">
+                <ion-item>
+                    <ion-label position="stacked">Nom de famille* :</ion-label>
+                    <ion-input v-model="account.nom_compte" type="text" placeholder="Nom de famille" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Prénom* :</ion-label>
+                    <ion-input v-model="account.prenom_compte" type="text" placeholder="Prénom" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Email* :</ion-label>
+                    <ion-input v-model="account.email_compte" type="text" placeholder="Email" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Mot de passe :</ion-label>
+                    <ion-input v-model="account.mdp" type="password" placeholder="Mot de passe (Aucune modification)" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Téléphone :</ion-label>
+                    <ion-input v-model="account.tel" type="text" placeholder="Téléphone" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Adresse :</ion-label>
+                    <ion-input v-model="account.adresse" type="text" placeholder="Adresse" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Complément d'adresse :</ion-label>
+                    <ion-input v-model="account.adresse_comp" type="text" placeholder="Complément d'adresse" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Code postal :</ion-label>
+                    <ion-input v-model="account.cp" type="text" placeholder="Code postal" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Ville :</ion-label>
+                    <ion-input v-model="account.ville" type="text" placeholder="Ville" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Pays :</ion-label>
+                    <ion-input v-model="account.pays" type="text" placeholder="Pays" />
+                </ion-item>
+                <ion-item>
+                    <ion-label position="stacked">Ta fonction :</ion-label>
+                    <ion-textarea v-model="account.fonction" type="text" placeholder="Fonction" />
+                </ion-item>
+            </form>
+        </ion-content>
+    </ion-modal>
+
     <ion-content :fullscreen="true">
       <main class="container">
-        <h2>Températures récentes</h2>
+        <h2>Ton tableau de bord</h2>
 
         <p v-if="loading" class="message">Chargement des températures...</p>
         <p v-else-if="temperatures.length === 0" class="message">
@@ -93,6 +144,21 @@ interface ChartPoint {
 const router = useRouter();
 const temperatures = ref<Temperature[]>([]);
 const loading = ref(true);
+const isAccountFormOpen = ref(false)
+
+const account = ref({
+  nom_compte: '',
+  prenom_compte: '',
+  email_compte: '',
+  mdp: '',
+  tel: '',
+  adresse: '',
+  adresse_comp: '',
+  cp: '',
+  ville: '',
+  pays: '',
+  fonction: ''
+});
 
 const showError = async (message: string) => {
   const alert = await alertController.create({
@@ -119,6 +185,14 @@ const logout = async () => {
 
 function goToTemperatures() {
     router.push("/temperatures")
+}
+
+function openAccountForm() {
+  isAccountFormOpen.value = true;
+}
+
+function closeAccountForm() {
+  isAccountFormOpen.value = false;
 }
 
 const infosAccount = async () => {
@@ -160,7 +234,7 @@ const infosAccount = async () => {
     ].join('\n');
 
     const alert = await alertController.create({
-      header: 'tes informations',
+      header: 'Tes informations',
       message,
       buttons: [
         { text: 'Modifier' },
@@ -274,6 +348,17 @@ h2 {
 .message {
   color: #64748b;
   text-align: center;
+}
+
+.account-form {
+  width: min(520px, 100%);
+  margin: 0 auto;
+}
+
+.account-form ion-item {
+  margin-bottom: 14px;
+  --padding-start: 0;
+  --inner-padding-end: 0;
 }
 
 .container > ion-button {
