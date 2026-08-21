@@ -6,57 +6,6 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-modal :is-open="isAccountFormOpen" @didDismiss="closeAccountForm">
-        <ion-content class="ion-padding">
-            <form class="account-form">
-                <ion-item>
-                    <ion-label position="stacked">Nom de famille* :</ion-label>
-                    <ion-input v-model="account.nom_compte" type="text" placeholder="Nom de famille" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Prénom* :</ion-label>
-                    <ion-input v-model="account.prenom_compte" type="text" placeholder="Prénom" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Email* :</ion-label>
-                    <ion-input v-model="account.email_compte" type="text" placeholder="Email" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Mot de passe :</ion-label>
-                    <ion-input v-model="account.mdp" type="password" placeholder="Mot de passe (Aucune modification)" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Téléphone :</ion-label>
-                    <ion-input v-model="account.tel" type="text" placeholder="Téléphone" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Adresse :</ion-label>
-                    <ion-input v-model="account.adresse" type="text" placeholder="Adresse" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Complément d'adresse :</ion-label>
-                    <ion-input v-model="account.adresse_comp" type="text" placeholder="Complément d'adresse" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Code postal :</ion-label>
-                    <ion-input v-model="account.cp" type="text" placeholder="Code postal" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Ville :</ion-label>
-                    <ion-input v-model="account.ville" type="text" placeholder="Ville" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Pays :</ion-label>
-                    <ion-input v-model="account.pays" type="text" placeholder="Pays" />
-                </ion-item>
-                <ion-item>
-                    <ion-label position="stacked">Ta fonction :</ion-label>
-                    <ion-textarea v-model="account.fonction" type="text" placeholder="Fonction" />
-                </ion-item>
-            </form>
-        </ion-content>
-    </ion-modal>
-
     <ion-content :fullscreen="true">
       <main class="container">
         <h2>Ton tableau de bord</h2>
@@ -146,7 +95,7 @@ const temperatures = ref<Temperature[]>([]);
 const loading = ref(true);
 const isAccountFormOpen = ref(false)
 
-const account = ref({
+var account = ref({
   nom_compte: '',
   prenom_compte: '',
   email_compte: '',
@@ -187,8 +136,225 @@ function goToTemperatures() {
     router.push("/temperatures")
 }
 
-function openAccountForm() {
-  isAccountFormOpen.value = true;
+async function showAlert(header: string, message: string, buttons: string[] = ['OK']) {
+    const alert = await alertController.create({
+      header: header,
+      message: message,
+      buttons: buttons
+    });
+
+    await alert.present();
+}
+
+async function fillAccountForm(compte: Compte) {
+    const compteId = Cookies.get("compte_id")
+    const accessToken = sessionStorage.getItem('access_token');
+  const alert = await alertController.create({
+      header: 'Modification de votre compte',
+      inputs: [
+        {
+          name: 'nom',
+          type: 'text',
+          value: compte.nom_compte,
+          min: 0,
+          placeholder: 'Nom de famille* :'
+        },{
+          name: 'prenom',
+          type: 'text',
+          value: compte.prenom_compte,
+          placeholder: 'Prénom* :'
+        },{
+          name: 'mel',
+          type: 'email',
+          value: compte.email_compte,
+          placeholder: 'Email* :'
+        },{
+          name: 'mdp',
+          type: 'password',
+          value: "",
+          placeholder: 'Mot de passe (Aucune modification)'
+        },{
+          name: 'mdpr',
+          type: 'password',
+          value: "",
+          placeholder: 'Mot de passe à reconfirmer (Aucune modification)'
+        },{
+          name: 'tel',
+          type: 'text',
+          value: compte.tel,
+          placeholder: 'Téléphone (Maximum 20 caractères) :'
+        },{
+          name: 'adresse',
+          type: 'text',
+          value: compte.adresse,
+          placeholder: 'Adresse :'
+        },{
+          name: 'adresse_comp',
+          type: 'text',
+          value: compte.adresse_comp,
+          placeholder: "Complément d'adresse :"
+        },{
+          name: 'cp',
+          type: 'text',
+          value: compte.cp,
+          placeholder: 'Code postal :'
+        },{
+          name: 'ville',
+          type: 'text',
+          value: compte.ville,
+          placeholder: 'Ville :'
+        },{
+          name: 'fonction',
+          type: 'text',
+          value: compte.fonction,
+          placeholder: 'Ta fonction :'
+        }
+      ],
+      buttons:[{
+          text: 'Valider les modifications',
+          handler: async (data) => {
+            if (data.nom == "" || data.prenom == "" || data.mel == ""){
+                await showAlert("Erreur lors de la modification","Merci de remplir tous les champs obligatoires")
+                return false;
+            }
+            if (!regex('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$', data.mel)){
+                await showAlert("Erreur lors de la modification","L'adresse email saisi ne respecte pas la forme d'une adresse email classique.")
+                return false;
+            }
+            if (data.mdp != data.mdpr){
+                await showAlert("Erreur lors de la modification","Les 2 mots de passe sont différents")
+                return false;
+            }
+            if (data.mdp != "" && data.mdpr != "" && data.mdp.length < 8){
+                await showAlert("Erreur lors de la modification","Le mot de passe doit comporter au minimum 8 caractères")
+                return false;
+            }
+            if (data.tel.length > 20) {
+                await showAlert("Erreur lors de la modification","Le numéro de téléphone ne doit pas comporter plus de 20 caractères")
+                return false;
+            }
+            var body
+            if (data.mdp != ""){
+                body = {
+                    nom_compte: data.nom,
+                    prenom_compte: data.prenom,
+                    email_compte: data.mel,
+                    mdp: data.mdp,
+                    tel: data.tel,
+                    adresse: data.adresse,
+                    adresse_comp: data.adresse_comp,
+                    cp: data.cp,
+                    ville: data.ville,
+                    pays: data.pays,
+                    fonction: data.fonction
+                }
+            } else {
+                    body = {
+                    nom_compte: data.nom,
+                    prenom_compte: data.prenom,
+                    email_compte: data.mel,
+                    tel: data.tel,
+                    adresse: data.adresse,
+                    adresse_comp: data.adresse_comp,
+                    cp: data.cp,
+                    ville: data.ville,
+                    pays: data.pays,
+                    fonction: data.fonction
+                }
+            }
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/comptes/${compteId}`, {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: "include",
+                    body: JSON.stringify(body)
+                })
+                if (!response.ok){
+                    const errorData = await response.json().catch(() => null);
+                    await showAlert("Erreur lors de la modification","Une erreur s'est produit. Veuillez réessayer ultérieurement")
+                    throw new Error(
+                        typeof errorData?.detail === 'string'
+                        ? errorData.detail
+                        : 'Impossible de charger tes températures.',
+                    );
+                }
+                const response2 = await fetch("http://127.0.0.1:8000/email/envoyer", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        destinataire: data.mel,
+                        sujet: "Suivi thermique",
+                        corps: "Bonjour,\n\nNous confirmons la modification de ton compte pour le suivi thermique.\n\nCordialement,\n\nLe suivi thermique."
+                    }),
+                })
+                if (response2.ok){
+                    await showAlert("Modification","Ton compte a bien été modifié avec succès. Un mail de confirmation a été envoyé sur ton nouvel adresse mail.")
+                } else {
+                    await showAlert("Modification","Ton compte a bien été modifié avec succès")
+                }
+                return
+            } catch (error: any) {
+                await showAlert("Erreur lors de la modification","Une erreur s'est produit. Veuillez réessayer ultérieurement")
+                console.error(error.message)
+                return false
+            }
+        }
+        },
+        {
+          text: 'Annuler',
+          role: 'cancel'
+        }
+        ],
+      });
+
+    await alert.present();
+  
+}
+
+function regex(pattern: string, value: string): boolean {
+    const regex = new RegExp(pattern);
+    return regex.test(value);
+  }
+
+async function openAccountForm(compte?: Compte) {
+  try {
+    if (!compte) {
+      const compteId = Cookies.get('compte_id');
+
+      if (typeof compteId !== 'string' || !compteId) {
+        await showError('Identifiant du compte manquant. Reconnecte-toi.');
+        return;
+      }
+
+    const accessToken = sessionStorage.getItem('access_token');
+      const response = await fetch(`http://127.0.0.1:8000/comptes/${compteId}`, {
+        headers: accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : undefined,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        if (response.status === 401) {
+          sessionStorage.removeItem('access_token');
+        }
+        throw new Error(typeof errorData?.detail === 'string' ? errorData.detail : 'Une erreur est survenue.');
+      }
+
+      compte = await response.json();
+    }
+
+    fillAccountForm(compte);
+  } catch (error) {
+    await showError(error instanceof Error ? error.message : 'Le serveur est inaccessible.');
+  }
 }
 
 function closeAccountForm() {
@@ -196,7 +362,7 @@ function closeAccountForm() {
 }
 
 const infosAccount = async () => {
-  const compteId = Cookies.get('compte_id');
+    const compteId = Cookies.get('compte_id');
   if (typeof compteId !== 'string' || !compteId) {
     await showError('Identifiant du compte manquant. Reconnectez-toi.');
     return;
@@ -237,14 +403,17 @@ const infosAccount = async () => {
       header: 'Tes informations',
       message,
       buttons: [
-        { text: 'Modifier' },
+        { text: 'Modifier', role: 'modifier' },
         { text: 'Supprimer le compte' },
         { text: 'Fermer', role: 'cancel' },
       ],
     });
 
     await alert.present();
-    await alert.onDidDismiss();
+    const { role } = await alert.onDidDismiss();
+    if (role === 'modifier') {
+      await openAccountForm(compte);
+    }
   } catch (error) {
     await showError(error instanceof Error ? error.message : 'Le serveur est inaccessible.');
   }

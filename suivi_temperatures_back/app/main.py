@@ -1,3 +1,5 @@
+import json
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +11,16 @@ from app.routers import comptes
 from app.routers import temperatures
 from app.routers import login
 from app.routers import email
+
+
+def _normalize_validation_error(errors):
+    normalized = []
+    for error in errors:
+        item = dict(error)
+        if 'input' in item and isinstance(item['input'], (bytes, bytearray)):
+            item['input'] = item['input'].decode('utf-8', errors='replace')
+        normalized.append(item)
+    return normalized
 
 
 app = FastAPI()
@@ -30,9 +42,10 @@ app.add_middleware(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    safe_errors = _normalize_validation_error(exc.errors())
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors()}
+        content={"detail": safe_errors}
     )
 
 
