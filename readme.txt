@@ -14,4 +14,4 @@ python -m uvicorn app.main:app --reload (Lancement du projet)
 front-end :
 ionic start [nom du projet] (Pour créer le projet)
 ionic serve (Pour lancer le serveur)
-ionic capacitor add [nom plateform : ios/android] (Pour ajouter la version mobile)
+ionic capacitor add [nom plateform : ios/android] (Pour ajouter la version mobile mais nécssite une version de Node à 22 minimum)
