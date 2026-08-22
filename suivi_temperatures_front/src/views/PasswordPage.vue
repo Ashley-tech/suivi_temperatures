@@ -30,13 +30,15 @@
           <ion-item lines="full">
             <ion-label position="floating">Mot de passe* : (entre 8 et 50 caractères)</ion-label>
             <ion-input
-              :value="password"
-              :type="passwordVisible ? 'text' : 'password'"
+              v-model="password"
+              type="password"
               name="password"
               autocomplete="current-password"
-              @ionInput="onPasswordInput"
+              :clear-on-edit="false"
               required
-            ></ion-input>
+            ><ion-input-password-toggle
+                slot="end"
+              ></ion-input-password-toggle></ion-input>
           </ion-item>
 
           <ion-button fill="clear" size="small" type="button" @click="togglePasswordVisibility">
@@ -46,13 +48,15 @@
           <ion-item lines="full">
             <ion-label position="floating">Mot de passe (à reconfirmer) :</ion-label>
             <ion-input
-              :value="password2"
-              :type="passwordVisible2 ? 'text' : 'password'"
+              v-model="password2"
+              type="password"
               name="password2"
               autocomplete="current-password"
-              @ionInput="onPasswordInput2"
+              :clear-on-edit="false"
               required
-            ></ion-input>
+            ><ion-input-password-toggle
+                slot="end"
+              ></ion-input-password-toggle></ion-input>
           </ion-item>
 
           <ion-button fill="clear" size="small" type="button" @click="togglePasswordVisibility2">
@@ -96,6 +100,7 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
+  IonInputPasswordToggle,
 } from '@ionic/vue';
 
 const email = ref('');
@@ -195,7 +200,7 @@ const onChangePassword = async () => {
     } else {
         await showAlert("Mot de passe oublié ?","Ton mot de passe a bien été modifié avec succès")
     }
-    router.back()
+    reinitaliser()
 }
 
 const onFindPassword = async () => {

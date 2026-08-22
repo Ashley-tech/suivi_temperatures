@@ -24,34 +24,32 @@
           <ion-item lines="full">
             <ion-label position="floating">Mot de passe* <i>(Minimum 8 caractères)</i> :</ion-label>
             <ion-input
-              :value="password"
-              :type="passwordVisible ? 'text' : 'password'"
+              v-model="password"
+              type="password"
               name="password"
               autocomplete="current-password"
-              @ionInput="onPasswordInput"
+              :clear-on-edit="false"
               required
-            ></ion-input>
+            >
+          <ion-input-password-toggle
+                slot="end"
+              ></ion-input-password-toggle></ion-input>
           </ion-item>
-
-          <ion-button fill="clear" size="small" type="button" @click="togglePasswordVisibility">
-            {{ passwordVisible ? 'Masquer' : 'Afficher' }} le mot de passe
-          </ion-button>
 
           <ion-item lines="full">
             <ion-label position="floating">Mot de passe* (à reconfirmer) :</ion-label>
             <ion-input
-              :value="password2"
-              :type="passwordVisible2 ? 'text' : 'password'"
+              v-model="password2"
               name="passwordr"
+              type="password"
               autocomplete="current-password"
-              @ionInput="onPasswordInput2"
+              :clear-on-edit="false"
               required
-            ></ion-input>
+            >
+          <ion-input-password-toggle
+                slot="end"
+              ></ion-input-password-toggle></ion-input>
           </ion-item>
-
-          <ion-button fill="clear" size="small" type="button" @click="togglePasswordVisibility2">
-            {{ passwordVisible2 ? 'Masquer' : 'Afficher' }} le mot de passe
-          </ion-button>
 
           <ion-item lines="full">
             <ion-label position="floating">Nom de famille* :</ion-label>
@@ -125,6 +123,7 @@ import {
   IonLabel,
   IonPage,
   IonTitle,
+  IonInputPasswordToggle,
   IonToolbar,
 } from '@ionic/vue';
 
@@ -153,22 +152,6 @@ const showAlert = async (header: string, message: string, buttons: string[] = ['
   });
 
   await alert.present();
-};
-
-const togglePasswordVisibility = () => {
-  passwordVisible.value = !passwordVisible.value;
-};
-
-const togglePasswordVisibility2 = () => {
-  passwordVisible2.value = !passwordVisible2.value;
-};
-
-const onPasswordInput = (event: CustomEvent) => {
-  password.value = event.detail.value ?? '';
-};
-
-const onPasswordInput2 = (event: CustomEvent) => {
-  password2.value = event.detail.value ?? '';
 };
 
 const inscrire = async () => {

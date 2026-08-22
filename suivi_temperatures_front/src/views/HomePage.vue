@@ -17,20 +17,23 @@
           </ion-item>
 
           <ion-item lines="full">
-            <ion-label position="floating">Mot de passe</ion-label>
+            <ion-label position="floating">
+              Mot de passe
+            </ion-label>
+
             <ion-input
-              :value="password"
-              :type="passwordVisible ? 'text' : 'password'"
+              v-model="password"
+              type="password"
               name="password"
               autocomplete="current-password"
-              @ionInput="onPasswordInput"
+              :clear-on-edit="false"
               required
-            ></ion-input>
+            >
+              <ion-input-password-toggle
+                slot="end"
+              ></ion-input-password-toggle>
+            </ion-input>
           </ion-item>
-
-          <ion-button fill="clear" size="small" type="button" @click="togglePasswordVisibility">
-            {{ passwordVisible ? 'Masquer' : 'Afficher' }} le mot de passe
-          </ion-button>
 
           <ion-button fill="clear" size="small" type="button" @click="goToForgotPassword">
             Mot de passe oublié ?
@@ -64,6 +67,7 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
+  IonInputPasswordToggle,
 } from '@ionic/vue';
 
 const email = ref('');
@@ -79,14 +83,6 @@ const showLoginError = async (message: string) => {
   });
 
   await alert.present();
-};
-
-const togglePasswordVisibility = () => {
-  passwordVisible.value = !passwordVisible.value;
-};
-
-const onPasswordInput = (event: CustomEvent) => {
-  password.value = event.detail.value ?? '';
 };
 
 const onLogin = async () => {
