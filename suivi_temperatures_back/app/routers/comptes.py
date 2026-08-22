@@ -130,10 +130,8 @@ class CompteUpdate(BaseModel):
 def update_compte(
     id: int,
     compte_data: CompteUpdate,
-    db: Session = Depends(get_db),
-    current_user: Compte = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    _ = current_user
     compte = db.query(Compte).filter(Compte.id == id).first()
     if compte is None:
         raise HTTPException(
@@ -167,7 +165,7 @@ def update_compte(
         compte.email_compte = compte_data.email_compte
     if compte_data.mdp is not None:
         hashed_password_value = hash_password(compte_data.mdp)
-        compte.mdp = hashed_password_value
+        compte.mdp = compte_data.mdp
         compte.mdp_crypted = hashed_password_value
     if compte_data.tel is not None:
         compte.tel = compte_data.tel

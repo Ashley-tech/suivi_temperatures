@@ -132,7 +132,7 @@ const onLogin = async () => {
 };
 
 const goToForgotPassword = () => {
-  // TODO: implement forgot-password flow
+  router.push("/password")
 };
 
 const goToSignup = () => {

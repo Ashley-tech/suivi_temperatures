@@ -4,6 +4,7 @@ import HomePage from '../views/HomePage.vue'
 import DashboardPage from '@/views/DashboardPage.vue';
 import TemperaturesListPage from '@/views/TemperaturesListPage.vue';
 import SignupPage from '@/views/SignupPage.vue';
+import PasswordPage from '@/views/PasswordPage.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -25,6 +26,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/temperatures',
     name: 'TemperaturesList',
     component: TemperaturesListPage
+  },
+  {
+    path: '/password',
+    name: 'ForgotPassword',
+    component: PasswordPage
   }
 ]
 
