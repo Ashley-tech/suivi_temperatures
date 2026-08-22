@@ -40,6 +40,91 @@
         </form>
       </ion-content>
     </ion-modal>
+    <ion-modal
+      :is-open="isEditTemperatureFormOpen"
+      @didDismiss="closeTemperatureForm2"
+    >
+      <ion-content class="ion-padding">
+        <form class="temperature-form">
+
+          <ion-item>
+            <ion-label position="stacked">
+              Valeur en degré (°C)*
+            </ion-label>
+
+            <ion-input
+              v-model="editTemperature.degre"
+              type="number"
+              step="0.1"
+              placeholder="Ex. 21.5"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">
+              Localisation*
+            </ion-label>
+          </ion-item>
+
+          <ion-radio-group v-model="editTemperature.localisation">
+            <ion-item
+              v-for="location in locations"
+              :key="location"
+            >
+              <ion-radio
+                slot="start"
+                :value="location"
+              />
+
+              <ion-label>
+                {{ location }}
+              </ion-label>
+            </ion-item>
+          </ion-radio-group>
+
+          <ion-item>
+            <ion-label position="stacked">
+              Date de la température
+            </ion-label>
+
+            <ion-input
+              v-model="editTemperature.date_temperature"
+              type="date"
+            />
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">
+              Heure de la température
+            </ion-label>
+
+            <ion-input
+              v-model="editTemperature.heure"
+              type="time"
+            />
+          </ion-item>
+
+          <div class="form-actions">
+            <ion-button
+              type="button"
+              fill="outline"
+              @click="closeTemperatureForm2"
+            >
+              Annuler
+            </ion-button>
+
+            <ion-button
+              type="button"
+              class="primary-action"
+              @click="submitTemperatureModification"
+            >
+              Valider les modifications
+            </ion-button>
+          </div>
+
+        </form>
+      </ion-content>
+    </ion-modal>
 
     <ion-content :fullscreen="true" class="ion-padding">
       <main class="temperatures-container">
@@ -78,7 +163,7 @@
                 <td data-label="Température" class="temperature-value">{{ temperature.degre }} °C</td>
                 <td data-label="Localisation">{{ temperature.localisation }}</td>
                 <td data-label="Actions" class="actions-cell">
-                  <ion-button fill="outline" size="small">Modifier</ion-button>
+                  <ion-button fill="outline" size="small" @click="openTemperatureForm2(temperature)">Modifier</ion-button>
                   <ion-button fill="clear" color="danger" size="small" @click="confirmDeleteTemperature(temperature.id)">Supprimer</ion-button>
                 </td>
               </tr>
@@ -116,6 +201,8 @@ import {
   IonTitle,
   IonToolbar,
   alertController,
+  IonRadio,
+  IonRadioGroup
 } from '@ionic/vue';
 
 interface Temperature {
@@ -132,6 +219,15 @@ const errorMessage = ref('');
 const router = useRouter()
 const isTemperatureFormOpen = ref(false);
 const locations = ['NO', 'N', 'NE', 'SO', 'S', 'SE'];
+const isEditTemperatureFormOpen = ref(false);
+
+const editTemperature = ref({
+  id: -1,
+  degre: '',
+  localisation: '',
+  date_temperature: '',
+  heure: '',
+});
 const newTemperature = ref({
   degre: '',
   localisation: '',
@@ -200,7 +296,134 @@ const formatTime = (time: string | null) => time ? time.slice(0, 5) : 'Non rense
 
 onMounted(loadTemperatures);
 
+function openTemperatureForm2(temperature: Temperature) {
+  editTemperature.value = {
+    id: temperature.id,
+    degre: String(temperature.degre),
+    localisation: temperature.localisation,
+    date_temperature: temperature.date_temperature,
+    heure: temperature.heure?.slice(0, 5) ?? '',
+  };
 
+  isEditTemperatureFormOpen.value = true;
+}
+
+function closeTemperatureForm2() {
+  isEditTemperatureFormOpen.value = false;
+}
+
+const submitTemperatureModification = async () => {
+  const degre = Number(editTemperature.value.degre);
+  const localisation = editTemperature.value.localisation
+    .trim()
+    .toUpperCase();
+
+  const date = editTemperature.value.date_temperature;
+  const heure = editTemperature.value.heure;
+
+  if (
+    editTemperature.value.degre === '' ||
+    !Number.isFinite(degre) ||
+    !date || !heure ||
+    !localisation
+  ) {
+    await showAlert(
+      'Champs manquants',
+      'Merci de remplir tous les champs obligatoires.'
+    );
+    return;
+  }
+
+  if (degre < -100 || degre > 100) {
+    await showAlert(
+      'Valeur invalide',
+      'La température doit être comprise entre -100 et 100 °C.'
+    );
+    return;
+  }
+
+  if (!locations.includes(localisation)) {
+    await showAlert(
+      'Localisation invalide',
+      'Choisis une localisation parmi NO, N, NE, SO, S ou SE.'
+    );
+    return;
+  }
+
+  const accessToken = sessionStorage.getItem('access_token');
+
+  if (!accessToken) {
+    await showAlert(
+      'Erreur',
+      'Ta session a expiré. Reconnecte-toi.'
+    );
+    return;
+  }
+
+  const body: {
+    degre: number;
+    localisation: string;
+    date_temperature: string;
+    heure?: string;
+  } = {
+    degre,
+    localisation,
+    date_temperature: date,
+  };
+
+  if (heure) {
+    body.heure = heure;
+  }
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:8000/temperatures/${editTemperature.value.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      }
+    );
+
+    const dataResponse = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(
+        typeof dataResponse?.detail === 'string'
+          ? dataResponse.detail
+          : 'La température n\'a pas pu être modifiée.'
+      );
+    }
+
+    // Mise à jour de la ligne dans le tableau
+    const index = temperatures.value.findIndex(
+      (item) => item.id === editTemperature.value.id
+    );
+
+    if (index !== -1) {
+      temperatures.value[index] = dataResponse;
+    }
+
+    closeTemperatureForm2();
+
+    await showAlert(
+      'Succès',
+      'La température a bien été modifiée.'
+    );
+
+  } catch (error) {
+    await showAlert(
+      'Erreur',
+      error instanceof Error
+        ? error.message
+        : 'Le serveur est inaccessible.'
+    );
+  }
+};
 
 function openTemperatureForm() {
   isTemperatureFormOpen.value = true;
