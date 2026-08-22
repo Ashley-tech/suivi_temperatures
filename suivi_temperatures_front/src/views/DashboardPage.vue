@@ -357,10 +357,6 @@ async function openAccountForm(compte?: Compte) {
   }
 }
 
-function closeAccountForm() {
-  isAccountFormOpen.value = false;
-}
-
 const infosAccount = async () => {
     const compteId = Cookies.get('compte_id');
   if (typeof compteId !== 'string' || !compteId) {
@@ -404,7 +400,7 @@ const infosAccount = async () => {
       message,
       buttons: [
         { text: 'Modifier', role: 'modifier' },
-        { text: 'Supprimer le compte' },
+        { text: 'Supprimer le compte', role: 'delete'},
         { text: 'Fermer', role: 'cancel' },
       ],
     });
@@ -413,6 +409,8 @@ const infosAccount = async () => {
     const { role } = await alert.onDidDismiss();
     if (role === 'modifier') {
       await openAccountForm(compte);
+    }else if (role === "delete"){
+      await confirmDeleteA()
     }
   } catch (error) {
     await showError(error instanceof Error ? error.message : 'Le serveur est inaccessible.');
@@ -435,6 +433,79 @@ const confirmLogout = async () => {
     await logout();
   }
 };
+
+const confirmDeleteA = async () => {
+  const compteId = Cookies.get("compte_id")
+  const accessToken = sessionStorage.getItem('access_token');
+  const alert = await alertController.create({
+    header: 'Supprimer le compte',
+    message: 'Veux-tu vraiment supprimer ton compte ?',
+    buttons: [
+      { text: 'Oui', role: 'confirm' },
+      { text: 'Non', role: 'cancel' },
+    ],
+  });
+
+  await alert.present();
+  const { role } = await alert.onDidDismiss();
+  if (role === 'confirm') {
+    const response = await fetch(`http://127.0.0.1:8000/temperatures/compte/${compteId}`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    const data = await response.json()
+    console.log(data)
+    var response0;
+    for (var i = 0 ; i < data.length ; i++){
+      response0 = await fetch(`http://127.0.0.1:8000/temperatures/${data[i].id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      })
+    }
+    const response1 = await fetch(`http://127.0.0.1:8000/comptes/${compteId}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    if (!response1.ok){
+      const errorData = await response1.json().catch(() => null);
+      await showAlert("Erreur lors de la modification","Une erreur s'est produit. Veuillez réessayer ultérieurement")
+      throw new Error(
+        typeof errorData?.detail === 'string'
+        ? errorData.detail : 'Impossible de charger tes températures.',
+      );
+    }
+    const response2 = await fetch("http://127.0.0.1:8000/email/envoyer", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        destinataire: Cookies.get("email"),
+        sujet: "Suivi thermique - Compte supprimé",
+        corps: "Bonjour,\n\nNous te confirmons la suppression de ton compte. \n\nA très bientôt, je l'espère. \n\nCordialement,\n\nLe suivi thermique."
+      }),
+    })
+    if (!response2.ok){
+      await showAlert("Suppression du compte","Ton compte a bien été supprimé, mais nous n'avons pas pu t'envoyer un mail de confirmation.")
+    }
+    await logout();
+  } else {
+    await infosAccount()
+  }
+}
 
 const recentTemperatures = computed(() => temperatures.value.slice(0, 4).reverse());
 
