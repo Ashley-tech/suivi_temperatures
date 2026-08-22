@@ -180,8 +180,8 @@ const inscrire = async () => {
         await showAlert("Erreur lors de l'inscription","Les 2 mots de passe sont différents !")
         return;
     }
-    if (password.value.length < 8){
-        await showAlert("Erreur lors de l'inscription","Le mot de passe doit avoir au minimum 8 caractères.")
+    if (password.value.length < 8 || password.value.length > 50){
+        await showAlert("Erreur lors de l'inscription","Le mot de passe doit comporter entre 8 et 50 caractères. Il en comporte "+password.value.length+".")
         return;
     }
     if (tel.value.length > 20){

@@ -225,13 +225,29 @@ async function fillAccountForm(compte: Compte) {
                 await showAlert("Erreur lors de la modification","Les 2 mots de passe sont différents")
                 return false;
             }
-            if (data.mdp != "" && data.mdpr != "" && data.mdp.length < 8){
-                await showAlert("Erreur lors de la modification","Le mot de passe doit comporter au minimum 8 caractères")
+            if (data.mdp != "" && data.mdpr != "" && (data.mdp.length < 8 ||data.mdp.length > 50)){
+                await showAlert("Erreur lors de la modification","Le mot de passe doit comporter entre 8 et 50 caractères. Il en comporte "+data.mdp.length+".")
                 return false;
             }
             if (data.tel.length > 20) {
                 await showAlert("Erreur lors de la modification","Le numéro de téléphone ne doit pas comporter plus de 20 caractères")
                 return false;
+            }
+            if (data.mel != Cookies.get("email")){
+              const response = await fetch("http://127.0.0.1:8000/comptes/find",{
+                method: "POST",
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  email: data.mel
+                }),
+              });
+              if (response.ok) {
+                await showAlert("Erreur lors de la modification","L'adresse email saisi est déjà utilisée. Veuillez en saisir une autre.");
+                return;
+              }
             }
             var body
             if (data.mdp != ""){
